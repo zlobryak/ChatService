@@ -3,6 +3,12 @@ package ru.netology
 import java.time.LocalDateTime
 
 fun main() {
+    // Добавьте несколько сообщений, чтобы было что отлаживать
+    ChatService.addMessage(userToChatWithId = 123, text = "Привет")
+    ChatService.addMessage(userToChatWithId = 123, text = "Как дела?")
+
+    // Вызов функции с последовательностью
+    ChatService.getLastMessages(userToChatWithId = 123)
 
 }
 
@@ -73,8 +79,9 @@ object ChatService {
     fun getLastMessages(userToChatWithId: Int): MutableList<String> {
         val chat = chats.find { it.userToChatWithId == userToChatWithId }
             ?: throw ChatNotFoundException(userToChatWithId)
-        val listOfMessages = mutableListOf<String>()
-        chat.messages.forEach { listOfMessages.add(it.text) }
+        val listOfMessages = chat.messages.asSequence()
+            .map { (it.text) }
+            .toMutableList()
         if (listOfMessages.isEmpty()) {
             println("Нет сообщений")
         }
@@ -87,9 +94,11 @@ object ChatService {
     fun getListOfMessagesToRead(userToChatWithId: Int, messagesCount: Int): List<Message> {
         val chat = chats.find { it.userToChatWithId == userToChatWithId }
             ?: throw ChatNotFoundException(userToChatWithId)
-        val chatsToReturn = chat.messages.takeLast(messagesCount)
-        chatsToReturn.forEach { it.unread = false } //Храним список ссылок на оригинальные объекты
-        return chatsToReturn
+        return chat.messages
+            .takeLast(messagesCount)
+            .asSequence()
+            .onEach { it.unread = false }
+            .toList()
     }
 
     // Подсчитывает количество чатов, в которых есть хотя бы одно непрочитанное сообщение.
